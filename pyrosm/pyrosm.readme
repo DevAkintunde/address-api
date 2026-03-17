@@ -1,5 +1,23 @@
-# Fresh install
- - conda install -c conda-forge pyrosm
+# Navigate to pyrosm dir if not there
+- cd pyrosm
 
+# Fresh install
+ - Install anaconda or miniconda
+ - Run
+    - conda create -n geo_env python=3.11
+    - conda activate geo_env
+     - to deactive: conda deactivate
+    - conda install -c conda-forge pandas numpy pyrosm -y
+    - conda install pytorch torchvision torchaudio cpuonly -c pytorch
+    - pip install transformers datasets accelerate evaluate seqeval thefuzz requests tqdm python-dateutil
+
+# Check OSM data is latest and download if not
+ - python osmFIleDownloadAutomation.py
+
+# Train data and run a simple test
+ - python sazzy.py
+  - if issue with running with error: Error loading "C:\ProgramData\miniconda3\envs\geo_env\Lib\site-packages\torch\lib\shm.dll"
+    - try uninstall touch and reinstall with
+    - pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 

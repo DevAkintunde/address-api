@@ -3,7 +3,7 @@ logs
 *.log
 
 pyrosm/latestOsm
-
+.venv
 
 # Editor directories and files
 .vscode/*

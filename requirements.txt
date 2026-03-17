@@ -1,12 +1,12 @@
 
-fastapi[standard]
-# fastapi 
+# fastapi[standard]
+fastapi 
 uvicorn 
 pydantic 
 transformers 
 torch
+geopandas
 # pyrosm 
-geopandas 
 pandas
 evaluate 
 seqeval

@@ -1,0 +1,5 @@
+# Fresh install
+ - conda install -c conda-forge pyrosm
+
+
+

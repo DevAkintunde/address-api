@@ -1,0 +1,12 @@
+
+fastapi[standard]
+# fastapi 
+uvicorn 
+pydantic 
+transformers 
+torch
+# pyrosm 
+geopandas 
+pandas
+evaluate 
+seqeval

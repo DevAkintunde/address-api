@@ -1,3 +1,6 @@
+# Download parts
+ - https://download.geofabrik.de/africa/nigeria.html
+ 
 # Create virtual env - (Note: Using MacOS here)
  - python3.12 -m venv .venv
  - source .venv/bin/activate

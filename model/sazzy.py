@@ -2,8 +2,10 @@ import os
 import random
 import logging
 import quackosm as qosm
+from shapely.geometry import box
 import pandas as pd
-from pyrosm import OSM
+
+# from pyrosm import OSM
 import numpy as np
 import evaluate
 from datasets import Dataset, Features, Sequence, ClassLabel, Value
@@ -90,98 +92,126 @@ def compute_metrics(p):
 # 1. DATA EXTRACTION & MERGING
 def get_nigeria_master_data(pbf_path):
     """
-    Extract all relevant features in one go
+    Process Nigeria in regions to avoid memory issues
     """
-    # Combined tags filter
-    tags_filter = {
-        "building": True,
-        "amenity": ["bank", "fuel", "hospital", "place_of_worship", "school"],
-        "shop": True,  # Optional: include shops as potential landmarks
-    }
-    
-    # Extract everything at once
-    gdf = qosm.convert_pbf_to_geodataframe(
-        pbf_path,
-        tags_filter=tags_filter,
-        # Optional: limit to specific region
-        # geometry_filter=box(2.5, 5.5, 7.5, 7.5),
-    )
-    
-    logger.info(f"Extracted {len(gdf)} total features")
-    
-    # Process into your training format
-    rows = []
-    for _, row in gdf.iterrows():
-        tags = row.get('tags', {})
-        
-        # Determine if it's a building or POI
-        if 'building' in tags:
-            # It's a building
-            rows.append({
-                'addr:housenumber': tags.get('addr:housenumber', ''),
-                'addr:street': tags.get('addr:street', ''),
-                'addr:city': tags.get('addr:city', ''),
-                'name': ''
-            })
-        elif any(k in tags for k in ['amenity', 'shop']):
-            # It's a POI/landmark
-            rows.append({
-                'name': tags.get('name', ''),
-                'addr:street': tags.get('addr:street', ''),
-                'addr:city': tags.get('addr:city', ''),
-                'addr:housenumber': ''
-            })
-    
-    master_df = pd.DataFrame(rows)
-    master_df = master_df.dropna(subset=['addr:street', 'name'], how='all').fillna('')
-    
-    return master_df
+    # Define Nigerian regions (you can adjust these bounds)
+    regions = [
+        {"name": "lagos", "bbox": box(2.5, 6.0, 4.5, 7.0)},  # Lagos metro
+        {"name": "ibadan", "bbox": box(3.5, 7.0, 4.5, 8.0)},  # Ibadan area
+        {"name": "abuja", "bbox": box(7.0, 8.5, 8.0, 9.5)},  # Abuja area
+        {"name": "kano", "bbox": box(8.0, 11.5, 9.5, 13.0)},  # Kano region
+        {"name": "portharcourt", "bbox": box(6.5, 4.5, 7.5, 5.5)},  # Port Harcourt
+    ]
+
+    all_data = []
+
+    for region in regions:
+        try:
+            logger.info(f"Processing region: {region['name']}")
+
+            # Process one region at a time with geometry filter
+            gdf = qosm.convert_pbf_to_geodataframe(
+                pbf_path,
+                tags_filter={
+                    "building": True,
+                    "amenity": [
+                        "bank",
+                        "fuel",
+                        "hospital",
+                        "place_of_worship",
+                        "school",
+                    ],
+                },
+                geometry_filter=region["bbox"],  # This limits the area processed
+            )
+
+            if len(gdf) > 0:
+                # Extract address data
+                rows = []
+                for _, row in gdf.iterrows():
+                    tags = row.get("tags", {})
+
+                    # Check if it has address components
+                    if tags.get("addr:street") or tags.get("name"):
+                        rows.append(
+                            {
+                                "addr:housenumber": tags.get("addr:housenumber", ""),
+                                "addr:street": tags.get("addr:street", ""),
+                                "addr:city": tags.get("addr:city", "")
+                                or region["name"].title(),
+                                "name": tags.get("name", ""),
+                            }
+                        )
+
+                region_df = pd.DataFrame(rows)
+                all_data.append(region_df)
+                logger.info(f"Region {region['name']}: {len(region_df)} records")
+
+        except Exception as e:
+            logger.error(f"Failed on region {region['name']}: {e}")
+            continue
+
+    # Combine all regions
+    if all_data:
+        master_df = pd.concat(all_data, ignore_index=True)
+        master_df = master_df.dropna(subset=["addr:street", "name"], how="all").fillna(
+            ""
+        )
+        logger.info(f"Total records: {len(master_df)}")
+        return master_df
+    else:
+        raise Exception("No data could be extracted from any region")
+
 
 # def get_nigeria_master_data(pbf_path):
-#     try:
-#         logger.info("Initializing OSM parser...")
-#         osm = OSM(
-#             pbf_path,
-#             bounding_box=[
-#                 2.5,
-#                 5.5,
-#                 7.5,
-#                 7.5,
-#             ],  # limiting to Lagos, Ogun, Ondo, parts of Oyo/Osun
-#         )
+#     """
+#     Extract all relevant features in one go
+#     """
+#     # Combined tags filter
+#     tags_filter = {
+#         "building": True,
+#         "amenity": ["bank", "fuel", "hospital", "place_of_worship", "school"],
+#         "shop": True,  # Optional: include shops as potential landmarks
+#     }
 
-#         # Extract Buildings (Standard addresses)
-#         logger.info("Extracting buildings...")
-#         buildings = osm.get_buildings()
-#         addr_df = buildings[["addr:housenumber", "addr:street", "addr:city"]].copy()
-#         addr_df["name"] = ""  # Buildings usually don't have a name tag
+#     # Extract everything at once
+#     gdf = qosm.convert_pbf_to_geodataframe(
+#         pbf_path,
+#         tags_filter=tags_filter,
+#         # Optional: limit to specific region
+#         geometry_filter=box(2.5, 5.5, 7.5, 7.5), # box(2.5, 6.5, 3.5, 7.5)
+#         # rows_per_batch=500000  # Reduce batch size
+#     )
 
-#         # Extract POIs (Landmarks like banks, fuel stations)
-#         logger.info("Extracting POIs (Landmarks)...")
-#         poi_filter = {
-#             "amenity": ["bank", "fuel", "hospital", "place_of_worship", "school"]
-#         }
-#         pois = osm.get_pois(custom_filter=poi_filter)
-#         landmark_df = pois[["name", "addr:street", "addr:city"]].copy()
-#         landmark_df["addr:housenumber"] = ""
+#     logger.info(f"Extracted {len(gdf)} total features")
 
-#         # Merge into Master Dataframe
-#         master_df = pd.concat([addr_df, landmark_df], ignore_index=True)
-#         master_df = master_df.dropna(subset=["addr:street", "name"], how="all").fillna(
-#             ""
-#         )
+#     # Process into your training format
+#     rows = []
+#     for _, row in gdf.iterrows():
+#         tags = row.get('tags', {})
 
-#         #  Use this to set CAP (limit) to a max amount of data to export if needed
-#         # master_df = master_df.sample(n=5000, random_state=42)
+#         # Determine if it's a building or POI
+#         if 'building' in tags:
+#             # It's a building
+#             rows.append({
+#                 'addr:housenumber': tags.get('addr:housenumber', ''),
+#                 'addr:street': tags.get('addr:street', ''),
+#                 'addr:city': tags.get('addr:city', ''),
+#                 'name': ''
+#             })
+#         elif any(k in tags for k in ['amenity', 'shop']):
+#             # It's a POI/landmark
+#             rows.append({
+#                 'name': tags.get('name', ''),
+#                 'addr:street': tags.get('addr:street', ''),
+#                 'addr:city': tags.get('addr:city', ''),
+#                 'addr:housenumber': ''
+#             })
 
-#         logger.info(f"Successfully extracted {len(master_df)} records.")
+#     master_df = pd.DataFrame(rows)
+#     master_df = master_df.dropna(subset=['addr:street', 'name'], how='all').fillna('')
 
-#         # Generate usable REFs
-#         # generate_ref_files(master_df)
-#         return master_df
-#     except Exception as e:
-#         logger.error(f"Failed to parse OSM data: {e}")
-#         raise
+#     return master_df
 
 
 # 2. BIO TAGGING & AUGMENTATION

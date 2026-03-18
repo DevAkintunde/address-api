@@ -1,7 +1,6 @@
 import os
 import random
 import logging
-import quackosm as qosm
 import pandas as pd
 from pyrosm import OSM
 import numpy as np
@@ -88,54 +87,72 @@ def compute_metrics(p):
 
 
 # 1. DATA EXTRACTION & MERGING
-def get_nigeria_master_data(pbf_path):
-    """
-    Extract all relevant features in one go
-    """
-    # Combined tags filter
-    tags_filter = {
-        "building": True,
-        "amenity": ["bank", "fuel", "hospital", "place_of_worship", "school"],
-        "shop": True,  # Optional: include shops as potential landmarks
-    }
-    
-    # Extract everything at once
-    gdf = qosm.convert_pbf_to_geodataframe(
-        pbf_path,
-        tags_filter=tags_filter,
-        # Optional: limit to specific region
-        # geometry_filter=box(2.5, 5.5, 7.5, 7.5),
-    )
-    
-    logger.info(f"Extracted {len(gdf)} total features")
-    
-    # Process into your training format
-    rows = []
-    for _, row in gdf.iterrows():
-        tags = row.get('tags', {})
-        
-        # Determine if it's a building or POI
-        if 'building' in tags:
-            # It's a building
-            rows.append({
-                'addr:housenumber': tags.get('addr:housenumber', ''),
-                'addr:street': tags.get('addr:street', ''),
-                'addr:city': tags.get('addr:city', ''),
-                'name': ''
-            })
-        elif any(k in tags for k in ['amenity', 'shop']):
-            # It's a POI/landmark
-            rows.append({
-                'name': tags.get('name', ''),
-                'addr:street': tags.get('addr:street', ''),
-                'addr:city': tags.get('addr:city', ''),
-                'addr:housenumber': ''
-            })
-    
-    master_df = pd.DataFrame(rows)
-    master_df = master_df.dropna(subset=['addr:street', 'name'], how='all').fillna('')
-    
-    return master_df
+def get_nigeria_master_data(pbf_path, sample_size=5000):
+    import time
+
+    try:
+        start_total = time.time()
+        logger.info("Initializing OSM parser with SW Nigeria bounding box...")
+
+        # Southwest Nigeria bounding box (Lagos, Ogun, Ondo, Oyo, Osun)
+        osm = OSM(pbf_path, bounding_box=[2.5, 5.5, 7.5, 7.5])
+
+        # --- Extract Buildings (FASTER via custom filter) ---
+        start = time.time()
+        logger.info("Extracting buildings (filtered)...")
+
+        buildings = osm.get_data_by_custom_criteria(
+            custom_filter={"building": True},
+            filter_type="keep",
+            keep_nodes=False,
+            keep_ways=True,
+            keep_relations=False,
+        )
+
+        addr_df = buildings[["addr:housenumber", "addr:street", "addr:city"]].copy()
+
+        addr_df["name"] = ""
+
+        logger.info(f"Buildings extracted in {time.time() - start:.2f}s")
+
+        # --- Extract POIs (Landmarks) ---
+        start = time.time()
+        logger.info("Extracting POIs (filtered)...")
+
+        poi_filter = {
+            "amenity": ["bank", "fuel", "hospital", "place_of_worship", "school"]
+        }
+
+        pois = osm.get_pois(custom_filter=poi_filter)
+
+        landmark_df = pois[["name", "addr:street", "addr:city"]].copy()
+
+        landmark_df["addr:housenumber"] = ""
+
+        logger.info(f"POIs extracted in {time.time() - start:.2f}s")
+
+        # --- Merge ---
+        master_df = pd.concat([addr_df, landmark_df], ignore_index=True)
+
+        # --- Clean ---
+        master_df = master_df.dropna(subset=["addr:street", "name"], how="all").fillna(
+            ""
+        )
+
+        # --- Smart Sampling (AFTER filtering) ---
+        if sample_size and len(master_df) > sample_size:
+            master_df = master_df.sample(n=sample_size, random_state=42)
+
+        logger.info(f"Final dataset size: {len(master_df)}")
+
+        logger.info(f"Total extraction time: {time.time() - start_total:.2f}s")
+
+        return master_df
+
+    except Exception as e:
+        logger.error(f"Failed to parse OSM data: {e}")
+        raise
+
 
 # def get_nigeria_master_data(pbf_path):
 #     try:

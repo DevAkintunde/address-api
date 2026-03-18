@@ -4,13 +4,16 @@
 # Fresh install
  - Install anaconda or miniconda
  - Run
-    - conda create -n geo_env python=3.11
+    - conda create -n geo_env python=3.12
     - conda activate geo_env
      - to deactive: conda deactivate
     - conda install -c conda-forge pandas numpy pyrosm -y
     - conda install pytorch torchvision torchaudio cpuonly -c pytorch
     - pip install transformers datasets accelerate evaluate seqeval thefuzz requests tqdm python-dateutil
 
+# Existing Install
+  - conda activate geo_env  
+  
 # Check OSM data is latest and download if not
  - python osmFIleDownloadAutomation.py
 

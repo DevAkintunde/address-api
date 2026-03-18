@@ -10,3 +10,4 @@
  - fastapi dev
 
 
+# run "deactivate" to deactivate env

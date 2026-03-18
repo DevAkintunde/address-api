@@ -3,6 +3,8 @@ logs
 *.log
 
 pyrosm/latestOsm
+latestOsm
+files
 .venv
 
 # Editor directories and files

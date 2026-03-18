@@ -4,8 +4,12 @@ logs
 
 pyrosm/latestOsm
 latestOsm
-files
+files*
 .venv
+*.pkl
+*.geojsonl
+__pycache__
+nigeria-address-ner
 
 # Editor directories and files
 .vscode/*

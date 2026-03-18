@@ -4,8 +4,6 @@ import logging
 import quackosm as qosm
 from shapely.geometry import box
 import pandas as pd
-
-# from pyrosm import OSM
 import numpy as np
 import evaluate
 from datasets import Dataset, Features, Sequence, ClassLabel, Value
@@ -16,6 +14,8 @@ from transformers import (
     Trainer,
     DataCollatorForTokenClassification,
 )
+# Import the regions module
+from nigeria_regions import get_regions, get_southwest_nigeria, get_major_cities
 
 # from test_inference import run_live_test
 # from generate_refs import generate_ref_files
@@ -114,13 +114,6 @@ def get_nigeria_master_data(pbf_path):
                 pbf_path,
                 tags_filter={
                     "building": True,
-                    "amenity": [
-                        "bank",
-                        "fuel",
-                        "hospital",
-                        "place_of_worship",
-                        "school",
-                    ],
                 },
                 geometry_filter=region["bbox"],  # This limits the area processed
             )

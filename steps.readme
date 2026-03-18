@@ -11,3 +11,19 @@
 
 
 # run "deactivate" to deactivate env
+
+## Usage
+# Train on 100,000 Lagos buildings (default) (expects data in ./data/Nigeria.geojsonl)
+python sazzy.py
+
+# Train on ALL Lagos buildings (~1.5 million)
+python sazzy.py --all-buildings
+
+# Train on 500,000 Lagos buildings
+python sazzy.py --samples 500000
+
+# Train on ALL Southwest Nigeria buildings (~3-4 million)
+python sazzy.py --region southwest --all-buildings
+
+# Train on ALL Nigeria (35.7 million buildings) - ⚠️ VERY LONG!
+python sazzy.py --region all --all-buildings

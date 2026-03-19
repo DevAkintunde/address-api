@@ -6,10 +6,10 @@ pyrosm/latestOsm
 latestOsm
 files*
 .venv
-*.pkl
 *.geojsonl
 __pycache__
-nigeria-address-ner
+nigeria-address-ner/*
+!*00.pkl
 
 # Editor directories and files
 .vscode/*

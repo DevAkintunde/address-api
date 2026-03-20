@@ -14,9 +14,17 @@
 # run "deactivate" to deactivate env
 
 # Convert trained model to version useable ONNX for TransformerJS
- - python -m optimum.exporters.onnx --model ./nigeria-address-ner --quantize ./nigeria-address-ner-onnx/
+ - python convertModelToOnnx.py
  -- If it fails, run: 
-  - pip install "transformers>=4.36,<4.58.0" "optimum[exporters,onnxruntime]" "numpy<2"
+  - pip install optimum[exporters,onnxruntime]
+
+
+# First, verify installation
+optimum-cli export onnx --help
+
+# Export your model with quantization
+optimum-cli export onnx --model ./nigeria-address-ner --quantize ./nigeria-address-ner-onnx/
+
 
 ## Usage
 # Train on 100,000 Lagos buildings (default) (expects data in ./data/Nigeria.geojsonl)

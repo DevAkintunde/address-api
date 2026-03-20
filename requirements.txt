@@ -15,8 +15,9 @@ torch>=2.0.0
 
 # Convert to ONNX
 optimum
-exporters
-optimum[onnxruntime]
+onnx 
+onnxruntime
+# optimum[onnxruntime]
 optimum[exporters]
 # "optimum[onnxruntime]"
 

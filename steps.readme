@@ -13,6 +13,11 @@
 
 # run "deactivate" to deactivate env
 
+# Convert trained model to version useable ONNX for TransformerJS
+ - python -m optimum.exporters.onnx --model ./nigeria-address-ner --quantize ./nigeria-address-ner-onnx/
+ -- If it fails, run: 
+  - pip install "transformers>=4.36,<4.58.0" "optimum[exporters,onnxruntime]" "numpy<2"
+
 ## Usage
 # Train on 100,000 Lagos buildings (default) (expects data in ./data/Nigeria.geojsonl)
 python sazzy.py

@@ -13,6 +13,13 @@ evaluate>=0.4.0
 torch>=2.0.0
 #accelerate
 
+# Convert to ONNX
+optimum
+exporters
+optimum[onnxruntime]
+optimum[exporters]
+# "optimum[onnxruntime]"
+
 # Utilities
 numpy>=1.24.0
 seqeval>=1.2.2

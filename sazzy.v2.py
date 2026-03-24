@@ -858,7 +858,9 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.output,
         eval_strategy="epoch",
-        save_strategy="epoch",
+        save_strategy="steps",
+        save_steps=1000,
+        save_total_limit=3,
         learning_rate=args.learning_rate,
         per_device_train_batch_size= 8 if torch.cuda.is_available() else args.batch_size, # Reduced to max 8, critical for 4g GPU!
         per_device_eval_batch_size=args.batch_size,
@@ -868,7 +870,6 @@ def main():
         metric_for_best_model="f1",
         logging_dir=os.path.join(args.output, "logs"),
         logging_steps=50,
-        save_total_limit=2,
         remove_unused_columns=False,
         report_to="none",
         fp16=torch.cuda.is_available(),

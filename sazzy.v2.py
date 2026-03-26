@@ -857,7 +857,8 @@ def main():
     logger.info("Step 7: Configuring training")
     training_args = TrainingArguments(
         output_dir=args.output,
-        eval_strategy="epoch",
+        eval_strategy="steps",
+        eval_steps=1000,
         save_strategy="steps",
         save_steps=1000,
         save_total_limit=3,

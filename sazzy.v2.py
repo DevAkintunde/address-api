@@ -28,6 +28,7 @@ from transformers import (
     DataCollatorForTokenClassification,
 )
 from tqdm import tqdm
+from pathlib import Path
 
 # Import the regions module
 from nigeria_regions import get_region_from_coordinates, get_regions, get_southwest_nigeria, get_major_cities
@@ -858,9 +859,9 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.output,
         eval_strategy="steps",
-        eval_steps=1000,
+        eval_steps=3000,
         save_strategy="steps",
-        save_steps=1000,
+        save_steps=3000,
         save_total_limit=3,
         learning_rate=args.learning_rate,
         per_device_train_batch_size= 8 if torch.cuda.is_available() else args.batch_size, # Reduced to max 8, critical for 4g GPU!
@@ -942,8 +943,29 @@ def main():
         )
         logger.info("  ✓ Using manual collate function")
     
+     # Find the last valid checkpoint before training starts
+    from transformers.trainer_utils import get_last_checkpoint
+    
+    last_checkpoint = None
+    if os.path.exists(args.output):
+        # Get the last checkpoint (this checks for trainer_state.json which indicates a valid checkpoint)
+        last_checkpoint = get_last_checkpoint(args.output)
+        if last_checkpoint is not None:
+            logger.info(f"✅ Found existing checkpoint: {last_checkpoint}")
+            # Verify checkpoint has required files
+            checkpoint_path = Path(last_checkpoint)
+            required_files = ["trainer_state.json", "optimizer.pt", "scheduler.pt"]
+            has_all = all((checkpoint_path / f).exists() for f in required_files)
+            if has_all:
+                logger.info(f"   Checkpoint is valid. Resuming from step {trainer.state.global_step}")
+            else:
+                logger.warning(f"   Checkpoint is incomplete. Starting fresh.")
+                last_checkpoint = None
+        else:
+            logger.info("No existing checkpoint found. Starting fresh training.")
     try:
-        trainer.train()
+        # Pass resume_from_checkpoint to trainer.train()
+        trainer.train(resume_from_checkpoint=last_checkpoint if last_checkpoint else None)
     except Exception as e:
         logger.error(f"Training failed: {e}")
         logger.info("Attempting to save partial model...")

@@ -5,6 +5,7 @@
 # Create virtual env
  - python3.12 -m venv .venv
  - source .venv/bin/activate | .\\.venv\\Scripts\\Activate.ps1
+ - On windows, ensure this is also installed: https://aka.ms/vs/17/release/vc_redist.x64.exe
  - which python
  - python -m pip install --upgrade pip
  - pip install -r requirements.txt

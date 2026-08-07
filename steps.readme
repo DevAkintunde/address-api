@@ -9,36 +9,34 @@
  - which python
  - python -m pip install --upgrade pip
  - pip install -r requirements.txt
- - fastapi dev
-
-
-# run "deactivate" to deactivate env
-
-# Convert trained model to version useable ONNX for TransformerJS
- - python convertModelToOnnx.py
- -- If it fails, run: 
-  - pip install optimum[exporters,onnxruntime]
-
-
-# First, verify installation
-optimum-cli export onnx --help
-
-# Export your model with quantization
-optimum-cli export onnx --model ./nigeria-address-ner --quantize ./nigeria-address-ner-onnx/
 
 
 ## Usage
 # Train on 100,000 Lagos buildings (default) (expects data in ./data/Nigeria.geojsonl)
-python sazzy.py
+python sazzy.v2.py
 
 # Train on ALL Lagos buildings (~1.5 million)
-python sazzy.py --all-buildings
+python sazzy.v2.py --all-buildings
 
 # Train on 500,000 Lagos buildings
-python sazzy.py --samples 500000
+python sazzy.v2.py --samples 500000
 
 # Train on ALL Southwest Nigeria buildings (~3-4 million)
-python sazzy.py --region southwest --all-buildings
+python sazzy.v2.py --region southwest --all-buildings
 
 # Train on ALL Nigeria (35.7 million buildings) - ⚠️ VERY LONG!
-python sazzy.py --region all --all-buildings
+python sazzy.v2.py --region all --all-buildings
+
+# run "deactivate" to deactivate env
+
+
+# TO Convert trained model to useable ONNX version for TransformerJS
+ - python convertModelToOnnx.py
+ -- If it fails, run: 
+  - pip install optimum[exporters,onnxruntime]
+
+- First, verify installation
+- optimum-cli export onnx --help
+
+# Export your model with quantization
+optimum-cli export onnx --model ./nigeria-address-ner --quantize ./nigeria-address-ner-onnx/
